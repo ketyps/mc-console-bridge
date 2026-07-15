@@ -48,6 +48,13 @@ frontend/build/
 Thumbs.db
 *.dmg
 
+# ─── mod 构建产物 ───
+mod/.gradle/
+mod/build/
+mod/*.log
+mod/k12_config.json
+mod/Microsoft.Services.Store.winmd
+
 # ─── 临时文件 ───
 *.tmp
 *.bak
