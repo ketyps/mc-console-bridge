@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "botbridge",
+  "version": "${version}",
+  "name": "BotBridge",
+  "description": "Minimal WebSocket chat bridge for the ketyps Minecraft AI bot project. No owo dependency.",
+  "authors": ["ketyps"],
+  "license": "CC0-1.0",
+  "environment": "client",
+  "entrypoints": {
+    "main": ["com.ketyps.botbridge.BotBridge"]
+  },
+  "depends": {
+    "fabricloader": ">=0.16.14",
+    "minecraft": "~1.21.5",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}
