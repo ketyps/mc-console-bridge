@@ -1,0 +1,54 @@
+# ─── 敏感数据：实例配置（含 DeepSeek API Key）───
+instances/
+
+# ─── Python ───
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# ─── 构建产物 ───
+build/
+dist/
+release/
+
+# ─── 运行时日志 ───
+log/
+*.html
+*.txt
+*.txt.bak
+
+# ─── 环境变量 ───
+.env
+.env.local
+.env.*.local
+
+# ─── Node.js ───
+node_modules/
+frontend/node_modules/
+
+# ─── 前端构建 ───
+frontend/dist/
+frontend/build/
+
+# ─── IDE ───
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.swp
+
+# ─── 操作系统 ───
+.DS_Store
+Thumbs.db
+*.dmg
+
+# ─── 临时文件 ───
+*.tmp
+*.bak
+*~
