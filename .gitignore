@@ -59,3 +59,6 @@ mod/Microsoft.Services.Store.winmd
 *.tmp
 *.bak
 *~
+
+# ─── Claude Code 本地设置 ───
+.claude/settings.local.json
