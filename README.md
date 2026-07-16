@@ -67,7 +67,12 @@ mc_ai_bot/
 
 **方式一：直接运行（推荐）**
 
-从 Release 下载 `mc-console-bridge-v1.0.0.zip`，解压后双击 `bot/MessageConsole.exe` 启动。
+从 [Releases](https://github.com/ketyps/mc-console-bridge/releases) 下载以下两个文件放到同一目录：
+
+| 文件 | 说明 |
+|------|------|
+| `mc-console-bridge-v1.0.0.zip` | 主程序，解压后双击 `bot/MessageConsole.exe` 启动 |
+| `botbridge-0.1.0.jar` | Fabric Mod，放入 `.minecraft/mods/` |
 
 **方式二：Python 源码运行**
 
@@ -304,7 +309,9 @@ mc_ai_bot_modular/
 ├── utils.py                # 文本清理、命令构建工具函数
 ├── logger.py               # 聊天日志记录器（HTML/TXT 双格式）
 ├── ws_test_server.py       # WebSocket 测试服务端（供调试使用）
-├── requirements.txt        # Python 依赖
+├── requirements.txt        # Python 运行依赖
+├── requirements-dev.txt    # Python 开发依赖（pytest）
+├── LICENSE                 # PolyForm Noncommercial 1.0.0
 ├── .env.example            # 环境变量模板
 ├── frontend/               # React 前端
 │   ├── src/
