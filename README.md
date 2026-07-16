@@ -6,6 +6,20 @@
 
 ---
 
+<p align="center">
+  <img src="images/demo-game.png" alt="游戏内演示截图" width="80%" />
+  <br/><br/>
+  <em>游戏内 AI 聊天演示</em>
+</p>
+
+<p align="center">
+  <img src="images/demo-console.png" alt="控制台对照截图" width="80%" />
+  <br/><br/>
+  <em>Web 管理面板控制台对照</em>
+</p>
+
+---
+
 ## 快速导航
 
 - [使用方法](#一使用方法)
