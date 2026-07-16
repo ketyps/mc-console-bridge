@@ -74,6 +74,8 @@ mc_ai_bot/
 | `mc-console-bridge-v1.0.0.zip` | 主程序，解压后双击 `bot/MessageConsole.exe` 启动 |
 | `botbridge-0.1.0.jar` | Fabric Mod，放入 `.minecraft/mods/` |
 
+> **⚠️ 安全提示**：`MessageConsole.exe` 由 PyInstaller 打包，无数字签名，Windows 可能会弹出 SmartScreen 警告（"Windows 已保护你的电脑"）。这是正常现象，点击 **"仍要运行"** 即可。如不放心，可前往 Windows 安全中心 → 病毒和威胁防护 → 管理设置 → 排除项，添加信任目录。也可选择下方的 Python 源码运行方式自行审查代码后启动。
+
 **方式二：Python 源码运行**
 
 ```bash
