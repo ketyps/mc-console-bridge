@@ -75,7 +75,9 @@ function AutoTextarea({
 export default function ConsolePage() {
   const { name } = useParams<{ name: string }>()
   const [searchParams] = useSearchParams()
-  const decodedName = decodeURIComponent(name ?? '')
+  // react-router 匹配路由时已对参数做一次 decodeURIComponent，
+  // 这里直接使用，不能再 decode 一次（否则含 % 的名称会 URIError 崩溃）。
+  const decodedName = name ?? ''
   const defaultTab = searchParams.get('tab') || 'connection'
 
   const { fetchInstances } = useStore()

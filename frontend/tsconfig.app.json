@@ -24,6 +24,7 @@
     "ignoreDeprecations": "6.0",
 
     /* Linting */
+    "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
