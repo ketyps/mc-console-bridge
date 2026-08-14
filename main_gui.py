@@ -117,6 +117,10 @@ class BotManager:
     async def start(self, name: str) -> str:
         if name in self._bots:
             return "已在运行"
+        # 【双启动防护】GUI 启动前检查 PID 心跳：若 CLI (python main.py) 或其他进程
+        # 已在运行同一实例，直接拒绝，避免两个 bot 同时连同一个 WebSocket、双回复。
+        if is_instance_running(name):
+            return f"实例 '{name}' 已在其他进程运行（PID 心跳检测），请先停止该进程"
 
         instance = BotInstance.load(name)
         if not instance:
@@ -170,6 +174,10 @@ class BotManager:
                 on_message(traceback.format_exc(), "error")
             finally:
                 self._bots.pop(name, None)
+                # 【资源泄漏修复】run() 正常退出或异常退出都要清理：
+                # 关闭 aiohttp session / 日志句柄 / 删除 .pid，避免句柄与心跳残留。
+                # shutdown() 内部幂等，与 stop() 先调用过的情况兼容。
+                await bot.shutdown()
 
         task = asyncio.create_task(_runner())
         self._bots[name] = {
@@ -218,6 +226,53 @@ def _json(data, status=200):
     return web.Response(body=body, status=status,
                         headers={"Content-Type": "application/json; charset=utf-8",
                                  **_NO_CACHE})
+
+
+# ============================================================
+# 配置写入白名单 & API Key 打码
+# ============================================================
+from dataclasses import fields as _dataclass_fields
+
+# 允许通过 REST API 修改的实例字段白名单。
+# 只认 BotInstance dataclass 声明的字段，排除 name/folder 等内部字段，
+# 杜绝 setattr 任意属性注入（曾可污染 log_dir 等路径属性）。
+_EDITABLE_FIELDS = {f.name for f in _dataclass_fields(BotInstance)} - {"name", "folder"}
+
+# API Key 打码前缀：GET 返回 "sk-****后4位"，前端保存时把打码值原样传回，
+# 服务端看到该前缀即视为"未修改"，不覆盖真实 Key。
+_API_KEY_MASK_PREFIX = "sk-****"
+
+
+def _mask_api_key(key: str) -> str:
+    """打码 API Key 用于回显：有值返回 sk-****后4位，无值返回空串。"""
+    if not key:
+        return ""
+    return _API_KEY_MASK_PREFIX + key[-4:]
+
+
+def _apply_config_fields(inst, config: dict) -> tuple[bool, bool]:
+    """按白名单把配置字段写入实例对象。返回 (changed_prompts, changed_commands)。
+
+    API Key 特殊处理：打码值（sk-****...）跳过视为未修改；空串表示清空；
+    其他值视为新 Key 写入。
+    """
+    changed_prompts = False
+    changed_commands = False
+    for k, v in config.items():
+        if k not in _EDITABLE_FIELDS:
+            continue
+        if k == "deepseek_api_key":
+            if isinstance(v, str) and v.startswith(_API_KEY_MASK_PREFIX):
+                continue  # 回显的打码值，不是新 Key
+            # 空串清空，其余按新 Key 写入
+            if not isinstance(v, str):
+                continue
+        setattr(inst, k, v)
+        if k in ("system_prompt", "auto_comment_prompt"):
+            changed_prompts = True
+        elif k == "custom_commands":
+            changed_commands = True
+    return changed_prompts, changed_commands
 
 
 @routes.get("/api/instances")
@@ -297,17 +352,7 @@ async def api_import(req):
     if not config:
         print(f"[WARN] 导入实例 '{name}' 时未解析到任何配置字段，将使用默认配置")
 
-    changed_prompts = False
-    changed_commands = False
-    for k, v in config.items():
-        if k == "deepseek_api_key":
-            continue
-        if hasattr(inst, k):
-            setattr(inst, k, v)
-            if k in ("system_prompt", "auto_comment_prompt"):
-                changed_prompts = True
-            elif k == "custom_commands":
-                changed_commands = True
+    changed_prompts, changed_commands = _apply_config_fields(inst, config)
 
     inst.save_env()
     if changed_prompts:
@@ -454,7 +499,8 @@ async def api_get_config(req):
         "local": name in bot_manager._bots,
         "runtime_state": bot_manager._load_runtime_state(inst),
         "config": {
-            "deepseek_api_key": inst.deepseek_api_key,
+            # 【安全】API Key 只回显打码值，不再明文下发到浏览器
+            "deepseek_api_key": _mask_api_key(inst.deepseek_api_key),
             "deepseek_api_url": inst.deepseek_api_url,
             "model_pro": inst.model_pro,
             "model_flash": inst.model_flash,
@@ -500,15 +546,9 @@ async def api_update_config(req):
     data = await req.json()
     inst = BotInstance.load(name)
     config = data.get("config", data)
-    changed_prompts = False
-    changed_commands = False
-    for k, v in config.items():
-        if hasattr(inst, k):
-            setattr(inst, k, v)
-            if k in ("system_prompt", "auto_comment_prompt"):
-                changed_prompts = True
-            elif k == "custom_commands":
-                changed_commands = True
+    if not isinstance(config, dict):
+        config = {}
+    changed_prompts, changed_commands = _apply_config_fields(inst, config)
     inst.save_env()
     if changed_prompts:
         inst.save_prompts()

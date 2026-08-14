@@ -100,7 +100,7 @@ class BotInstance:
     heartbeat_timeout: int = 600
     api_timeout: int = 15
     temperature: float = 0.7
-    max_tokens: int = 300
+    max_tokens: int = 500  # 推理模型（deepseek-v4-flash 等）的 max_tokens 是推理+正文总预算，300 容易被推理耗尽导致正文为空
     retry_count: int = 2
     retry_delay: float = 1.5
     reconnect_delay: int = 5
