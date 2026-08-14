@@ -6,9 +6,11 @@ Python 端（`sender_patterns` / `send_mode`），接入时 Python 侧代码不�
 ## 这是什么
 
 一个 Fabric **客户端** mod：
-- 监听聊天/系统消息，转发成纯文本行 `<玩家名> 内容` / `[系统] 内容`
+- 监听聊天/系统消息，聊天转发为 `<玩家名> 内容`，系统消息转发原始文本（无前缀）
 - 内嵌一个 WebSocket 服务器（默认 `ws://127.0.0.1:8080`），bot 作为 WS 客户端连上来
 - 收到 bot 发来的纯文本，`/` 开头当指令执行，否则当普通聊天发送 —— 不需要 JSON 包装
+- 连接建立后向 bot 发送一次身份握手 `{"type":"identity","name":"本地玩家名"}`，
+  供 Python 端做自身回声过滤与控制台显示（`BOT_NAME` 可不配置）
 
 ## 跟 chatsocket 的区别
 
@@ -16,19 +18,16 @@ Python 端（`sender_patterns` / `send_mode`），接入时 Python 侧代码不�
 - 入站消息不强制 JSON 解析，跟现有 `utils.py` 的 `raw`/`me`/`say` 模式直接兼容，不用切
   `send_mode` 为 json
 
-## 编译前需要做的事（我没法在这边验证，你需要自己核对）
+## 编译
 
-1. 用 [Fabric 官方模板](https://github.com/FabricMC/fabric-example-mod) 起一个新项目，
-   或者把这几个文件放进模板对应位置替换：
-   - `src/main/java/com/ketyps/botbridge/*.java`
-   - `src/main/resources/fabric.mod.json`
-   - `build.gradle`
-   - `gradle.properties`
-2. 去 https://fabricmc.net/develop/ 查一下 MC 1.21.5 对应的 **准确** `yarn_mappings` /
-   `loader_version` / `fabric_version`，填进 `gradle.properties`（我写的是格式示例，
-   不保证是当前实际可用的具体 build 号）。
-3. `./gradlew build`，产物在 `build/libs/botbridge-0.1.0.jar`。
-4. 装进 Fabric 客户端的 `mods` 目录，只需要额外装 **Fabric API**，不需要 owo。
+```bash
+./gradlew build          # 产物在 build/libs/botbridge-0.2.0.jar（含内嵌 Java-WebSocket）
+```
+
+- 版本组（MC 1.21.5 / yarn 1.21.5+build.1 / loader 0.19.3 / loom 1.10.5 /
+  fabric-api 0.128.2+1.21.5）已实测可构建，`gradle.properties` 里即当前可用版本。
+- 装进 Fabric 客户端的 `mods` 目录，只需要额外装 **Fabric API**，不需要 owo。
+- 发布 jar 用 `./gradlew remapJar`（`jar` 任务只产出 dev jar 到 `build/devlibs/`）。
 
 ## Python 端怎么接
 
