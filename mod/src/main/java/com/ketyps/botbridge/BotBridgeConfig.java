@@ -2,6 +2,7 @@ package com.ketyps.botbridge;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
 import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.IOException;
@@ -32,7 +33,9 @@ public class BotBridgeConfig {
             try {
                 Data loaded = GSON.fromJson(Files.readString(CONFIG_PATH), Data.class);
                 if (loaded != null) d = loaded;
-            } catch (IOException ignored) {
+            } catch (IOException | JsonSyntaxException e) {
+                // 文件读不了或 JSON 语法错误时回退默认配置，而不是让 mod 初始化崩溃
+                BotBridge.LOGGER.warn("BotBridge 配置解析失败，使用默认配置: {}", e.getMessage());
             }
         }
         BotBridgeConfig config = new BotBridgeConfig(d);
