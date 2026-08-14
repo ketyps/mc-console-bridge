@@ -18,8 +18,9 @@ class TestCleanForMinecraft:
     def test_removes_angle_brackets(self):
         assert clean_for_minecraft("<tag>") == "tag"
 
-    def test_removes_square_brackets(self):
-        assert clean_for_minecraft("[text]") == "text"
+    def test_preserves_square_brackets(self):
+        # [ ] 有意保留：服务器消息常带 [Server] / [前缀] 等括号，清理它们会破坏原文
+        assert clean_for_minecraft("[text]") == "[text]"
 
     def test_removes_curly_braces(self):
         assert clean_for_minecraft("{json}") == "json"
