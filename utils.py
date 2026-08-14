@@ -8,10 +8,12 @@ def get_timestamp() -> str:
     return f"[{now.year}.{now.month}.{now.day}/{now.hour:02d}:{now.minute:02d}]"
 
 
-def sanitize_reply(text: str, strip_chars: str = r'[<>{}|^`\\*/\x00-\x1f\x7f-\x9f  ￰-￿​-‏‪-‮⁠-⁯]') -> str:
+def sanitize_reply(text: str, strip_chars: str = r'[<>{}|^`\\*/\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f  ￰-￿​-‏‪-‮⁠-⁯]') -> str:
     """清理 AI 回复，移除可能导致命令注入或踢出的特殊字符。
     覆盖范围：Minecraft 控制字符、零宽字符、双向文本控制符、Unicode 格式字符。
     strip_chars: 正则字符类，<>{}|^`\\*/ 等结构性危险字符始终清理。
+    注意：\\n/\\r（0x0A/0x0D）不在删除范围内，由下方 replace 替换为空格，
+    避免多行文本被直接拼成一行。
     """
     text = text.replace('', ' ')
     cleaned = re.sub(strip_chars, '', text)

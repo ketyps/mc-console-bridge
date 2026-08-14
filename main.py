@@ -195,6 +195,10 @@ class MinecraftBot:
         self.prev_context_lines: list[str] | None = None
         self._shutdown = False
 
+        # BotBridge Mod 身份握手得到的本地玩家名（"k12" 这类当前客户端账号）。
+        # 用于自身回声过滤和控制台显示；优先级低于实例配置的 BOT_NAME。
+        self._player_name: str = ""
+
         # 速率限制（每个玩家独立计时）
         # 使用 dict 记录每个玩家的最后回复时间，key 为小写玩家名。
         # 在典型 Minecraft 服务器中同时活跃的玩家数量有限（通常 < 50），
@@ -291,6 +295,17 @@ class MinecraftBot:
         else:
             self.signals.log_line.emit(line, "info")
 
+    # ========== 玩家名解析（配置 > Mod 身份握手）==========
+
+    def _echo_name(self) -> str:
+        """用于自身回声检测的玩家名：优先实例配置 BOT_NAME，其次 Mod 身份握手。
+        为空时无法过滤回声，会造成控制台重复打印，故返回空串而非兜底占位。"""
+        return self.instance.bot_name or self._player_name
+
+    def _display_name(self) -> str:
+        """控制台展示用玩家名：配置 > 身份握手 > 兜底占位（不带括号，避免 <<未命名>>）。"""
+        return self._echo_name() or "未命名"
+
     # ========== 消息处理 ==========
 
     async def _handle_message(self, websocket, raw_msg: str):
@@ -298,9 +313,9 @@ class MinecraftBot:
 
         # 【修复】自身回音检测提前 — 在记录日志之前判断，避免 bot 自己的回复
         # 被服务器广播回来后先记一遍日志再丢弃，造成控制台重复打印
-        # [FIX-P0-2] is_self_echo 检测只能用真实的 bot_name，不能兜底
-        # folder 名（instance.name）不能代表游戏内 ID，否则自身回音检测失效
-        bot_name = self.instance.bot_name
+        # [FIX-P0-2] 回声检测优先用配置的 bot_name，其次用 Mod 身份握手的本地玩家名
+        # （instance.name 是文件夹名，不能代表游戏内 ID）
+        bot_name = self._echo_name()
         is_self_echo = bool(bot_name) and any(
             raw_msg.startswith(prefix) for prefix in [
                 f"<{bot_name}>",
@@ -313,6 +328,19 @@ class MinecraftBot:
 
         # 跳过 MC 服务器握手消息（协议层细节，对用户无意义）
         if raw_msg.startswith('{"type":"communicationType"'):
+            return
+
+        # BotBridge Mod 身份握手：连接建立后 Mod 会发一行
+        # {"type":"identity","name":"本地玩家名"}，用于回声过滤与控制台显示，
+        # 不需要手动配置 BOT_NAME。识别后立即返回，不进入聊天日志。
+        if raw_msg.startswith('{"type":"identity"'):
+            try:
+                data = json.loads(raw_msg)
+                if data.get("type") == "identity" and data.get("name"):
+                    self._player_name = str(data["name"])
+                    self._emit(f"{ts} [系统] 已识别本地玩家名: {self._player_name}", "info")
+            except Exception:
+                pass
             return
 
         # 收到的每条消息（非自回声、非握手）都先打印到日志
@@ -431,8 +459,10 @@ class MinecraftBot:
             return
 
         # AI 回复
-        # 传入完整原始消息，让 AI 自行理解语境和发送者
-        reply = await self.ai.get_reply(raw_msg, caller="普通@bot回复")
+        # 传入完整原始消息，让 AI 自行理解语境和发送者；
+        # 同时显式传入提问者玩家名，硬编码规则会要求回复以 @提问者 开头
+        reply = await self.ai.get_reply(raw_msg, caller="普通@bot回复",
+                                        reply_to=sender_name or "")
         if "有点问题" in reply or "有点慢" in reply:
             err = getattr(self.ai, "last_error", "未知错误")
             self._emit(f"{get_timestamp()} [系统] AI 调用失败: {err}", "error")
@@ -440,7 +470,7 @@ class MinecraftBot:
         command = make_safe_command(
             self.instance.reply_prefix, safe_reply,
             self.instance.max_command_bytes, self.send_mode)
-        _bot = self.instance.bot_name or "<未命名>"  # [FIX-P0-2] 展示兜底，不影响 MC 发送
+        _bot = self._display_name()  # [FIX-P0-2] 展示兜底，不影响 MC 发送
         _bot_prefix = f"* {_bot}" if self.send_mode == "me" else f"<{_bot}>"
         self._emit(f"{get_timestamp()} {_bot_prefix} {self.instance.reply_prefix}{safe_reply}", "robot_reply")
         command = self._clean_command(command)
@@ -475,7 +505,7 @@ class MinecraftBot:
                 self.instance.reply_prefix, safe,
                 self.instance.max_command_bytes, self.send_mode,
             )
-            _bot = self.instance.bot_name or "<未命名>"  # [FIX-P0-2] 展示兜底，不影响 MC 发送
+            _bot = self._display_name()  # [FIX-P0-2] 展示兜底，不影响 MC 发送
             _bot_prefix = f"* {_bot}" if self.send_mode == "me" else f"<{_bot}>"
             self._emit(f"{get_timestamp()} [手动触发回复]{_bot_prefix}  {self.instance.reply_prefix}{safe}", "robot_reply")
             try:
@@ -543,7 +573,7 @@ class MinecraftBot:
                     "", final, self.instance.max_command_bytes, self.send_mode)
 
                 self._print(f"📏 {len(command.encode('utf-8'))}/{self.instance.max_command_bytes}")
-                _bot = self.instance.bot_name or "<未命名>"  # [FIX-P0-2] 展示兜底，不影响 MC 发送
+                _bot = self._display_name()  # [FIX-P0-2] 展示兜底，不影响 MC 发送
                 _bot_prefix = f"* {_bot}" if self.send_mode == "me" else f"<{_bot}>"
                 self._emit(f"{get_timestamp()} [感知]{_bot_prefix}  {final}", "perception_reply")  # [FIX-P0-16] 氛围评论单独用独立 msg_type，前端可单独上色
                 try:
@@ -607,7 +637,7 @@ class MinecraftBot:
                             display_text = command
                     else:
                         display_text = command
-                    _bot = self.instance.bot_name or "<未命名>"  # [FIX-P0-2] 展示兜底，不影响 MC 发送
+                    _bot = self._display_name()  # [FIX-P0-2] 展示兜底，不影响 MC 发送
                     _bot_prefix = f"* {_bot}" if command.startswith("/me ") else f"<{_bot}>"
                     self._emit(f"{get_timestamp()} {_bot_prefix} {display_text}", "robot_reply")
                     await ws.send(command)
@@ -640,7 +670,7 @@ class MinecraftBot:
         while not self._shutdown:
             try:
                 async with websockets.connect(self.instance.ws_url) as ws:
-                    bot = self.instance.bot_name or "<未命名>"  # [FIX-P0-2] 展示兜底，不影响 MC 发送
+                    bot = self._display_name()  # [FIX-P0-2] 展示兜底，不影响 MC 发送
                     model = self.ai.model or "?"
                     ts = get_timestamp()
                     if first_connect:
@@ -741,11 +771,17 @@ class MinecraftBot:
                 await asyncio.sleep(self.instance.reconnect_delay_long)
 
     async def shutdown(self):
-        """优雅停止机器人。"""
+        """优雅停止机器人。幂等：重复调用（如 stop() 与 _runner finally 各调一次）直接返回。"""
+        if self._shutdown:
+            return
         self._shutdown = True
         hb = getattr(self, "_heartbeat_task", None)
         if hb and not hb.done():
             hb.cancel()
+            try:
+                await hb
+            except asyncio.CancelledError:
+                pass
         self.logger.close()
         await self.ai.close()
         _clear_pid(self.instance.folder)
