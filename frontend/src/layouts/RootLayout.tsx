@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Outlet, useNavigate, useParams } from 'react-router-dom'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   EllipsisVertical, Pin, PinOff, Pencil, Copy, Trash2,
 } from 'lucide-react'
@@ -124,7 +124,7 @@ function InstanceItem({
 /* ─── Root layout with sidebar ─── */
 export default function RootLayout() {
   const navigate = useNavigate()
-  const { name: routeName } = useParams()
+  const location = useLocation()
   const {
     instances,
     activeName,
@@ -133,6 +133,21 @@ export default function RootLayout() {
     setActiveName,
     removeInstance,
   } = useStore()
+
+  /* ─── 从 URL 解析当前实例名 ───
+     不能用 useParams()：它在父布局里恒为 {}（react-router 的 matches 按层截断）。
+     pathname 是未解码的原始串，这里解析 /console/<编码名> 并只解码一次。 */
+  const routeName = (() => {
+    const segs = location.pathname.split('/').filter(Boolean)
+    if (segs[0] === 'console' && segs[1]) {
+      try {
+        return decodeURIComponent(segs[1])
+      } catch {
+        return segs[1]
+      }
+    }
+    return null
+  })()
 
   /* ─── Dialog states ─── */
   const [createOpen, setCreateOpen] = useState(false)
