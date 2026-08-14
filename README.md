@@ -46,9 +46,9 @@
 
 | 组件 | 要求 |
 |------|------|
-| **Minecraft 客户端** | **1.21.5+**（仅测试过 1.21.5，Mod 使用 Fabric 标准 API，理论上未改接口的版本均可使用）；基岩版服务器可配合 [ViaFabricPlus](https://github.com/ViaVersion/ViaFabricPlus) 正常使用 |
+| **Minecraft 客户端** | **1.21.5+**（Mod 使用 Fabric 标准 API，实测 1.21.11 可运行）；基岩版服务器可配合 [ViaFabricPlus](https://github.com/ViaVersion/ViaFabricPlus) 正常使用 |
 | **Minecraft 服务端** | 任意支持 1.21.5 客户端的服务器（原版、Paper、Spigot 等均可） |
-| **Fabric Loader** | **≥ 0.19.3** |
+| **Fabric Loader** | **≥ 0.16.14**（推荐 0.19.3+，实测 0.18.4 可运行） |
 | **Fabric API** | **≥ 0.128.2+1.21.5**（必须安装） |
 | **Java** | **≥ 21**（运行 Minecraft 和 BotBridge Mod 需要） |
 | **Python** | **≥ 3.10**（运行后端服务需要） |
@@ -61,8 +61,9 @@
 
 ```
 mc_ai_bot/
-├── MessageConsole.exe       # [主程序] Web 管理面板 + Bot 后端 (PyInstaller 打包)
-├── botbridge-0.1.0.jar      # [Mod] Fabric 客户端 Mod，桥接游戏与 Bot
+├── bot/
+│   └── MessageConsole.exe    # [主程序] Web 管理面板 + Bot 后端 (PyInstaller 打包)
+├── botbridge-0.2.0.jar      # [Mod] Fabric 客户端 Mod，桥接游戏与 Bot
 └── instances/                # 实例配置文件夹（含 API Key，不会提交到 Git）
 ```
 
@@ -70,9 +71,9 @@ mc_ai_bot/
 
 #### 第一步：安装 Minecraft Mod
 
-1. 安装 **Fabric Loader 0.19.3+**（从 [Fabric 官网](https://fabricmc.net/use/) 下载安装器）
+1. 安装 **Fabric Loader 0.16.14+**（推荐 0.19.3+，从 [Fabric 官网](https://fabricmc.net/use/) 下载安装器）
 2. 将 **Fabric API**（`fabric-api-0.128.2+1.21.5.jar`）放入 `.minecraft/mods/`
-3. 将 **botbridge-0.1.0.jar** 放入 `.minecraft/mods/`
+3. 将 **botbridge-0.2.0.jar** 放入 `.minecraft/mods/`
 4. 启动 Minecraft（使用 Fabric 版本），Mod 会自动启动 WebSocket 服务
    - 默认监听 `ws://127.0.0.1:8080`
    - 可在 `.minecraft/config/botbridge.json` 中修改端口和地址
@@ -86,7 +87,7 @@ mc_ai_bot/
 | 文件 | 说明 |
 |------|------|
 | `mc-console-bridge-v1.0.0.zip` | 主程序，解压后双击 `bot/MessageConsole.exe` 启动 |
-| `botbridge-0.1.0.jar` | Fabric Mod，放入 `.minecraft/mods/` |
+| `botbridge-0.2.0.jar` | Fabric Mod，放入 `.minecraft/mods/` |
 
 > **⚠️ 安全提示**：`MessageConsole.exe` 由 PyInstaller 打包，无数字签名，Windows 可能会弹出 SmartScreen 警告（"Windows 已保护你的电脑"）。这是正常现象，点击 **"仍要运行"** 即可。如不放心，可前往 Windows 安全中心 → 病毒和威胁防护 → 管理设置 → 排除项，添加信任目录。也可选择下方的 Python 源码运行方式自行审查代码后启动。
 
@@ -227,18 +228,31 @@ Mod 在 Minecraft 客户端内启动一个 **WebSocket 服务端**，Python Bot 
 **Mod → Bot（游戏聊天转发）：**
 
 ```
-玩家名发送的消息内容
+<玩家名> 消息内容
 ```
 
-不包含时间戳和发送者前缀，由 Python 端自行拼装。
+Mod 会拼上 `<玩家名> ` 前缀（不含时间戳），Python 端通过 `sender_patterns` 模板
+（默认 `<{name}>,{name}:`）解析出发言者，用于每玩家冷却和管理员指令权限校验。
+若消息文本本身已含 `<玩家名>` / `[玩家名]` 前缀（部分服务器或聊天插件会把它编进文本），
+Mod 不会重复拼接，避免出现 `<ketyps> <ketyps>` 双名前缀。
 
 **Mod → Bot（系统消息转发）：**
 
 ```
-[System] 玩家加入了游戏
+玩家加入了游戏
 ```
 
-系统消息通过 `ClientReceiveMessageEvents.GAME` 事件转发。
+系统消息通过 `ClientReceiveMessageEvents.GAME` 事件转发原始文本（无前缀、无玩家名）。
+
+**Mod → Bot（身份握手，连接建立后第一条）：**
+
+```
+{"type":"identity","name":"k12"}
+```
+
+Mod 连接建立后（或玩家名就绪后的第一条广播前）发送一次本地玩家名。Python 端用它做
+**自身回声过滤**（bot 自己的回复被服务器广播回来后不再重复打印）和控制台显示，
+因此 `BOT_NAME` 可以不配置；配置了则以配置为准。握手消息不会写入聊天日志。
 
 **Bot → Mod（AI 回复发送到游戏）：**
 
@@ -368,7 +382,7 @@ pnpm dev                    # 启动 Vite 开发服务器（HMR）
 # Mod 开发
 cd mod
 ./gradlew build             # 构建 Mod
-# 构建产物在 mod/build/libs/botbridge-0.1.0.jar
+# 构建产物在 mod/build/libs/botbridge-0.2.0.jar
 ```
 
 开发模式下前端使用 Vite 代理，将 `/api/*` 和 `/ws/*` 请求转发到 Python 后端（18750 端口），配置见 `frontend/vite.config.ts`。
@@ -387,7 +401,7 @@ pnpm build                  # 输出到 frontend/dist/
 
 # Mod 构建
 cd mod
-./gradlew build             # 输出到 mod/build/libs/botbridge-0.1.0.jar
+./gradlew build             # 输出到 mod/build/libs/botbridge-0.2.0.jar
 # 使用 Gradle wrapper，无需手动安装 Gradle
 ```
 

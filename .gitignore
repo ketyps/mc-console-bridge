@@ -55,6 +55,13 @@ mod/*.log
 mod/k12_config.json
 mod/Microsoft.Services.Store.winmd
 
+# ─── 更新需求日志 ───
+更新需求日志/
+
+# ─── 崩溃/错误报告（用户拷到项目根目录排查用的）───
+错误报告*/
+crash-report*/
+
 # ─── 临时文件 ───
 *.tmp
 *.bak
