@@ -63,7 +63,7 @@
 mc_ai_bot/
 ├── bot/
 │   └── MessageConsole.exe    # [主程序] Web 管理面板 + Bot 后端 (PyInstaller 打包)
-├── botbridge-0.2.1.jar      # [Mod] Fabric 客户端 Mod，桥接游戏与 Bot
+├── botbridge-0.2.2.jar      # [Mod] Fabric 客户端 Mod，桥接游戏与 Bot
 └── instances/                # 实例配置文件夹（含 API Key，不会提交到 Git）
 ```
 
@@ -73,7 +73,7 @@ mc_ai_bot/
 
 1. 安装 **Fabric Loader 0.16.14+**（推荐 0.19.3+，从 [Fabric 官网](https://fabricmc.net/use/) 下载安装器）
 2. 将 **Fabric API**（`fabric-api-0.128.2+1.21.5.jar`）放入 `.minecraft/mods/`
-3. 将 **botbridge-0.2.1.jar** 放入 `.minecraft/mods/`
+3. 将 **botbridge-0.2.2.jar** 放入 `.minecraft/mods/`
 4. 启动 Minecraft（使用 Fabric 版本），Mod 会自动启动 WebSocket 服务
    - 默认监听 `ws://127.0.0.1:8080`
    - 可在 `.minecraft/config/botbridge.json` 中修改端口和地址
@@ -87,7 +87,7 @@ mc_ai_bot/
 | 文件 | 说明 |
 |------|------|
 | `mc-console-bridge-v1.1.0.zip` | 主程序，解压后双击 `bot/MessageConsole.exe` 启动 |
-| `botbridge-0.2.1.jar` | Fabric Mod，放入 `.minecraft/mods/` |
+| `botbridge-0.2.2.jar` | Fabric Mod，放入 `.minecraft/mods/` |
 
 > **版本对应**：Mod 与主程序需配套升级（Mod 协议含身份握手行）。主程序 zip 为 v1.1.x 系列，Mod 为 0.2.x 系列，下载时取同一次 Release 中的两个文件。
 
@@ -384,7 +384,7 @@ pnpm dev                    # 启动 Vite 开发服务器（HMR）
 # Mod 开发
 cd mod
 ./gradlew build             # 构建 Mod
-# 构建产物在 mod/build/libs/botbridge-0.2.1.jar
+# 构建产物在 mod/build/libs/botbridge-0.2.2.jar
 ```
 
 开发模式下前端使用 Vite 代理，将 `/api/*` 和 `/ws/*` 请求转发到 Python 后端（18750 端口），配置见 `frontend/vite.config.ts`。
@@ -403,7 +403,7 @@ pnpm build                  # 输出到 frontend/dist/
 
 # Mod 构建
 cd mod
-./gradlew build             # 输出到 mod/build/libs/botbridge-0.2.1.jar
+./gradlew build             # 输出到 mod/build/libs/botbridge-0.2.2.jar
 # 使用 Gradle wrapper，无需手动安装 Gradle
 ```
 

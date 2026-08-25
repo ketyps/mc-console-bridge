@@ -21,7 +21,7 @@ Python 端（`sender_patterns` / `send_mode`），接入时 Python 侧代码不�
 ## 编译
 
 ```bash
-./gradlew build          # 产物在 build/libs/botbridge-0.2.1.jar（含内嵌 Java-WebSocket）
+./gradlew build          # 产物在 build/libs/botbridge-0.2.2.jar（含内嵌 Java-WebSocket）
 ```
 
 - 版本组（MC 1.21.5 / yarn 1.21.5+build.1 / loader 0.19.3 / loom 1.10.5 /
