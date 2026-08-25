@@ -3,7 +3,7 @@
   "id": "botbridge",
   "version": "${version}",
   "name": "BotBridge",
-  "description": "Minimal WebSocket chat bridge for the ketyps Minecraft AI bot project. No owo dependency.",
+  "description": "Minimal WebSocket chat bridge for the ketyps Minecraft AI bot project (MC 26.2, Mojang mappings). No owo dependency.",
   "authors": ["ketyps"],
   "license": "PolyForm-Noncommercial-1.0.0",
   "environment": "client",
@@ -12,8 +12,8 @@
   },
   "depends": {
     "fabricloader": ">=0.16.14",
-    "minecraft": ">=1.21.5 <1.22",
-    "java": ">=21",
-    "fabric-api": ">=0.128.2"
+    "minecraft": ">=26.0",
+    "java": ">=25",
+    "fabric-api": ">=0.149.2"
   }
 }

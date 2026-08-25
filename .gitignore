@@ -56,6 +56,10 @@ mod/*.log
 mod/k12_config.json
 mod/Microsoft.Services.Store.winmd
 
+# ─── mod-26.2 (26.x 分叉) 构建产物 ───
+mod-26.2/.gradle/
+mod-26.2/build/
+
 # ─── 更新需求日志 ───
 更新需求日志/
 
