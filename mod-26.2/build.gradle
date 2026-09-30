@@ -1,5 +1,5 @@
 plugins {
-    id 'fabric-loom' version "$loom_version"
+    id 'net.fabricmc.fabric-loom' version "$loom_version"
     id 'maven-publish'
 }
 
@@ -16,9 +16,9 @@ repositories {
 
 dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    // 26.2 用 Mojang 官方映射(mojmap):loom 1.17-SNAPSHOT 会自动为该版本解析,无需显式 mappings
-    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+    // 26.2 用 Mojang 官方映射(mojmap):loom 1.17-SNAPSHOT 自动为该版本解析,无需显式 mappings
+    implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
     // 用 include 把 Java-WebSocket 打进最终 jar(jar-in-jar),用户无需额外安装
     include(implementation("org.java-websocket:Java-WebSocket:1.6.0"))

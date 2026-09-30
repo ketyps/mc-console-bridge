@@ -36,7 +36,8 @@ public class BotBridge implements ClientModInitializer {
 
         ClientReceiveMessageEvents.CHAT.register((message, signedMessage, sender, params, receptionTimestamp) -> {
             if (sender == null) return;
-            String senderName = sender.getName();
+            // 26.2 的 authlib(9.x) 中 GameProfile 是 record,访问器为 name()
+            String senderName = sender.name();
             String content = message.getString();
             server.broadcastChat(senderName, content);
         });
