@@ -57,7 +57,7 @@ jobs:
       - name: 构建 mod
         run: ./gradlew build --no-daemon
 
-  mod-26.2-build:
+  mod262-build:
     name: Mod 构建 26.x (mojmap)
     runs-on: ubuntu-latest
     defaults:
