@@ -1,4 +1,4 @@
-﻿# Minecraft 智能聊天机器人
+# Minecraft 智能聊天机器人
 
 > 一个基于大模型（OpenAI 格式 API）的 Minecraft AI 聊天机器人系统。  
 > 通过 Fabric 客户端 Mod 桥接游戏聊天与 AI，提供 Web 管理面板进行多实例管理。  
@@ -87,9 +87,18 @@ mc_ai_bot/
 | 文件 | 说明 |
 |------|------|
 | `mc-console-bridge-v1.1.0.zip` | 主程序，解压后双击 `bot/MessageConsole.exe` 启动 |
-| `botbridge-0.2.2.jar` | Fabric Mod，放入 `.minecraft/mods/` |
+| `botbridge-0.2.2.jar` | Fabric Mod（**Minecraft 1.21.5 ~ 1.21.x**），放入 `.minecraft/mods/` |
 
-> **版本对应**：Mod 与主程序需配套升级（Mod 协议含身份握手行）。主程序 zip 为 v1.1.x 系列，Mod 为 0.2.x 系列，下载时取同一次 Release 中的两个文件。
+> **⚠️ Mod 分两个版本，按 Minecraft 版本选择**（两者不通用，别装错）：
+>
+> | Mod 文件 | 适用 Minecraft | 说明 |
+> |---|---|---|
+> | `botbridge-0.2.2.jar` | **1.21.5 ~ 1.21.x** | yarn 映射，Java 21 |
+> | `botbridge-0.2.2-mc26.2.jar` | **26.x**（26.2 实测通过） | Mojang 官方映射(mojmap)，Java 25 |
+>
+> Minecraft 从 `1.21.x` 之后改用了年份命名（如 `26.2`），且改用 Mojang 官方映射，因此需要单独的构建产物。
+
+> **版本对应**：Mod 与主程序需配套升级（Mod 协议含身份握手行）。主程序 zip 为 v1.1.x 系列，Mod 为 0.2.x 系列，下载时取同一次 Release 中的文件。
 
 > **⚠️ 安全提示**：`MessageConsole.exe` 由 PyInstaller 打包，无数字签名，Windows 可能会弹出 SmartScreen 警告（"Windows 已保护你的电脑"）。这是正常现象，点击 **"仍要运行"** 即可。如不放心，可前往 Windows 安全中心 → 病毒和威胁防护 → 管理设置 → 排除项，添加信任目录。也可选择下方的 Python 源码运行方式自行审查代码后启动。
 

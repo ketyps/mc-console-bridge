@@ -1,4 +1,4 @@
-﻿name: CI
+name: CI
 
 on:
   push:
@@ -42,7 +42,7 @@ jobs:
         run: pnpm build
 
   mod-build:
-    name: Mod 构建 (gradlew build)
+    name: Mod 构建 1.21.x (yarn)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -55,4 +55,20 @@ jobs:
           java-version: "21"
       - uses: gradle/actions/setup-gradle@v4
       - name: 构建 mod
+        run: ./gradlew build --no-daemon
+
+  mod-26.2-build:
+    name: Mod 构建 26.x (mojmap)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mod-26.2
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "25"
+      - uses: gradle/actions/setup-gradle@v4
+      - name: 构建 mod (26.x)
         run: ./gradlew build --no-daemon
